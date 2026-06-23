@@ -179,6 +179,9 @@ async function fetchProducts(reset = false) {
         "Could not load products. Start the backend server, then try again.",
         "error"
       );
+      setTimeout(() => {
+        showMessage("")
+      }, 5000);
     }
 
     setStatus("Error");
