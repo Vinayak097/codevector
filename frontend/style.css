@@ -1,0 +1,44 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+select {
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+#products {
+  display: grid;
+  gap: 12px;
+}
+
+.product {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.product h3 {
+  margin: 0 0 8px;
+}
+
+.product p {
+  margin: 4px 0;
+}
+
+button {
+  margin-top: 20px;
+  padding: 12px 20px;
+  cursor: pointer;
+}
