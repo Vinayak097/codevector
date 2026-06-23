@@ -166,26 +166,61 @@ select {
   color: #873421;
 }
 
-.actions {
+.pagination {
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 10px;
   margin-top: 22px;
 }
 
-button {
-  min-width: 160px;
-  padding: 0 18px;
+.pagination > button {
+  min-width: 112px;
+  padding: 0 16px;
   background: #214f46;
   color: #ffffff;
   cursor: pointer;
   font-weight: 800;
 }
 
-button:hover:not(:disabled) {
-  background: #183d36;
+.page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-button:disabled {
+.page-number {
+  width: 44px;
+  min-width: 44px;
+  padding: 0;
+  background: #ffffff;
+  color: #214f46;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.page-number[aria-current="page"] {
+  background: #214f46;
+  color: #ffffff;
+  cursor: default;
+  opacity: 1;
+}
+
+.page-dots {
+  display: inline-grid;
+  min-width: 28px;
+  min-height: 44px;
+  place-items: center;
+  color: #6a7d76;
+  font-weight: 800;
+}
+
+button:hover:not(:disabled) {
+  background: #183d36;
+  color: #ffffff;
+}
+
+button:disabled:not([aria-current="page"]) {
   cursor: not-allowed;
   opacity: 0.55;
 }
@@ -208,5 +243,19 @@ button:disabled {
 
   .toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .page-numbers {
+    justify-content: center;
+    order: -1;
+  }
+
+  .pagination > button {
+    width: 100%;
   }
 }

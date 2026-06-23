@@ -1,38 +1,38 @@
 const productsContainer = document.getElementById("products");
-const loadMoreBtn = document.getElementById("loadMore");
+const prevPageBtn = document.getElementById("prevPage");
+const nextPageBtn = document.getElementById("nextPage");
+const pageNumbersEl = document.getElementById("pageNumbers");
 const categorySelect = document.getElementById("category");
 const limitSelect = document.getElementById("limit");
 const statusEl = document.getElementById("status");
 const loadedCountEl = document.getElementById("loadedCount");
 const cursorTextEl = document.getElementById("cursorText");
 
-const API_BASE ="http://localhost:8000"
+const API_BASE = "http://localhost:8000";
 
-let cursorUpdatedAt = null;
-let cursorId = null;
-let loadedCount = 0;
+let pageCursors = [null];
+let currentPageIndex = 0;
+let currentPageCount = 0;
+let reachedEnd = false;
 let isLoading = false;
 
 function setStatus(text) {
   statusEl.textContent = text;
 }
 
-function setButton(text, disabled) {
-  loadMoreBtn.textContent = text;
-  loadMoreBtn.disabled = disabled;
-}
-
 function updateSummary() {
-  loadedCountEl.textContent = `${loadedCount} product${loadedCount === 1 ? "" : "s"} loaded`;
-  cursorTextEl.textContent = cursorId ? `Cursor ID ${cursorId}` : "First page";
+  loadedCountEl.textContent = `Page ${currentPageIndex + 1}`;
+  cursorTextEl.textContent = `${currentPageCount} product${currentPageCount === 1 ? "" : "s"} shown`;
 }
 
 function resetState() {
-  cursorUpdatedAt = null;
-  cursorId = null;
-  loadedCount = 0;
+  pageCursors = [null];
+  currentPageIndex = 0;
+  currentPageCount = 0;
+  reachedEnd = false;
   productsContainer.innerHTML = "";
   updateSummary();
+  updatePagination();
 }
 
 function formatPrice(value) {
@@ -110,7 +110,12 @@ function renderProduct(product) {
   productsContainer.appendChild(card);
 }
 
-function buildUrl(reset) {
+function renderProducts(products) {
+  productsContainer.innerHTML = "";
+  products.forEach(renderProduct);
+}
+
+function buildUrl(pageIndex) {
   const params = new URLSearchParams({
     limit: limitSelect.value,
   });
@@ -119,29 +124,98 @@ function buildUrl(reset) {
     params.set("category", categorySelect.value);
   }
 
-  if (!reset && cursorUpdatedAt && cursorId) {
-    params.set("cursorUpdatedAt", cursorUpdatedAt);
-    params.set("cursorId", cursorId);
+  const cursor = pageCursors[pageIndex];
+
+  if (cursor) {
+    params.set("cursorUpdatedAt", cursor.updatedAt);
+    params.set("cursorId", cursor.id);
   }
 
   return `${API_BASE}/products?${params.toString()}`;
 }
 
-async function fetchProducts(reset = false) {
-  if (isLoading) {
+function getVisiblePageIndexes() {
+  const lastIndex = pageCursors.length - 1;
+  const indexes = new Set([
+    0,
+    lastIndex,
+    currentPageIndex - 2,
+    currentPageIndex - 1,
+    currentPageIndex,
+    currentPageIndex + 1,
+    currentPageIndex + 2,
+  ]);
+
+  return [...indexes]
+    .filter((index) => index >= 0 && index <= lastIndex)
+    .sort((a, b) => a - b);
+}
+
+function renderPageNumbers() {
+  pageNumbersEl.innerHTML = "";
+
+  const visiblePages = getVisiblePageIndexes();
+  let previousIndex = null;
+
+  visiblePages.forEach((pageIndex) => {
+    if (previousIndex !== null && pageIndex - previousIndex > 1) {
+      const dots = document.createElement("span");
+      dots.className = "page-dots";
+      dots.textContent = "...";
+      pageNumbersEl.appendChild(dots);
+    }
+
+    const pageButton = document.createElement("button");
+    pageButton.type = "button";
+    pageButton.className = "page-number";
+    pageButton.textContent = String(pageIndex + 1);
+    pageButton.disabled = isLoading || pageIndex === currentPageIndex;
+
+    if (pageIndex === currentPageIndex) {
+      pageButton.setAttribute("aria-current", "page");
+    }
+
+    pageButton.addEventListener("click", () => {
+      fetchPage(pageIndex);
+    });
+
+    pageNumbersEl.appendChild(pageButton);
+    previousIndex = pageIndex;
+  });
+}
+
+function updatePagination() {
+  prevPageBtn.disabled = isLoading || currentPageIndex === 0;
+  nextPageBtn.disabled =
+    isLoading || reachedEnd || !pageCursors[currentPageIndex + 1];
+  nextPageBtn.textContent = reachedEnd ? "Last Page" : "Next";
+  renderPageNumbers();
+}
+
+function saveNextCursor(pageIndex, nextCursor, productsLength) {
+  if (nextCursor && productsLength > 0) {
+    pageCursors[pageIndex + 1] = nextCursor;
+    reachedEnd = false;
     return;
   }
 
-  if (reset) {
-    resetState();
+  pageCursors.length = pageIndex + 1;
+  reachedEnd = true;
+}
+
+async function fetchPage(pageIndex) {
+  if (isLoading || pageIndex < 0 || !pageCursors[pageIndex]) {
+    if (pageIndex !== 0) {
+      return;
+    }
   }
 
   isLoading = true;
   setStatus("Loading");
-  setButton("Loading...", true);
+  updatePagination();
 
   try {
-    const response = await fetch(buildUrl(reset));
+    const response = await fetch(buildUrl(pageIndex));
 
     if (!response.ok) {
       throw new Error(`Request failed with status ${response.status}`);
@@ -150,58 +224,63 @@ async function fetchProducts(reset = false) {
     const data = await response.json();
     const products = Array.isArray(data.products) ? data.products : [];
 
-    if (products.length === 0 && loadedCount === 0) {
-      showMessage("No products found for this filter.");
-    } else {
-      products.forEach(renderProduct);
+    if (products.length === 0) {
+      if (pageIndex === 0) {
+        currentPageIndex = 0;
+        currentPageCount = 0;
+        reachedEnd = true;
+        pageCursors = [null];
+        showMessage("No products found for this filter.");
+      } else {
+        pageCursors.length = pageIndex;
+        reachedEnd = true;
+        setStatus("Complete");
+      }
+
+      updateSummary();
+      return;
     }
 
-    loadedCount += products.length;
-
-    if (data.nextCursor && products.length > 0) {
-      cursorUpdatedAt = data.nextCursor.updatedAt;
-      cursorId = data.nextCursor.id;
-      setButton("Load More", false);
-      setStatus("Ready");
-    } else {
-      cursorUpdatedAt = null;
-      cursorId = null;
-      setButton("No More Products", true);
-      setStatus("Complete");
-    }
-
+    renderProducts(products);
+    currentPageIndex = pageIndex;
+    currentPageCount = products.length;
+    saveNextCursor(pageIndex, data.nextCursor, products.length);
+    setStatus("Ready");
     updateSummary();
   } catch (error) {
     console.error(error);
 
-    if (loadedCount === 0) {
+    if (currentPageCount === 0) {
       showMessage(
         "Could not load products. Start the backend server, then try again.",
         "error"
       );
-      setTimeout(() => {
-        showMessage("")
-      }, 5000);
     }
 
     setStatus("Error");
-    setButton("Try Again", false);
   } finally {
     isLoading = false;
+    updatePagination();
   }
 }
 
-loadMoreBtn.addEventListener("click", () => {
-  fetchProducts(false);
+prevPageBtn.addEventListener("click", () => {
+  fetchPage(currentPageIndex - 1);
+});
+
+nextPageBtn.addEventListener("click", () => {
+  fetchPage(currentPageIndex + 1);
 });
 
 categorySelect.addEventListener("change", () => {
-  fetchProducts(true);
+  resetState();
+  fetchPage(0);
 });
 
 limitSelect.addEventListener("change", () => {
-  fetchProducts(true);
+  resetState();
+  fetchPage(0);
 });
 
-updateSummary();
-fetchProducts(true);
+resetState();
+fetchPage(0);

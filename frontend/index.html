@@ -41,15 +41,17 @@
     </section>
 
     <section class="summary" aria-live="polite">
-      <span id="loadedCount">0 products loaded</span>
-      <span id="cursorText">First page</span>
+      <span id="loadedCount">Page 1</span>
+      <span id="cursorText">0 products shown</span>
     </section>
 
     <section id="products" class="products" aria-live="polite"></section>
 
-    <div class="actions">
-      <button id="loadMore" type="button">Load More</button>
-    </div>
+    <nav class="pagination" aria-label="Product pages">
+      <button id="prevPage" type="button">Previous</button>
+      <div id="pageNumbers" class="page-numbers"></div>
+      <button id="nextPage" type="button">Next</button>
+    </nav>
   </main>
 
   <script src="app.js"></script>
