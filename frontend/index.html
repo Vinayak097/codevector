@@ -7,29 +7,51 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Cursor pagination</p>
+        <h1>Product Browser</h1>
+      </div>
+      <div class="status" id="status" aria-live="polite">Ready</div>
+    </header>
 
-  <h1>Product Browser</h1>
+    <section class="toolbar" aria-label="Product controls">
+      <label class="field">
+        <span>Category</span>
+        <select id="category">
+          <option value="">All Categories</option>
+          <option value="Electronics">Electronics</option>
+          <option value="Books">Books</option>
+          <option value="Fashion">Fashion</option>
+          <option value="Sports">Sports</option>
+          <option value="Home">Home</option>
+        </select>
+      </label>
 
-  <p>
-    Browsing 200,000 products using cursor pagination.
-  </p>
+      <label class="field">
+        <span>Page size</span>
+        <select id="limit">
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+      </label>
+    </section>
 
-  <select id="category">
-    <option value="">All Categories</option>
-    <option value="Electronics">Electronics</option>
-    <option value="Books">Books</option>
-    <option value="Fashion">Fashion</option>
-    <option value="Sports">Sports</option>
-    <option value="Home">Home</option>
-  </select>
+    <section class="summary" aria-live="polite">
+      <span id="loadedCount">0 products loaded</span>
+      <span id="cursorText">First page</span>
+    </section>
 
-  <div id="products"></div>
+    <section id="products" class="products" aria-live="polite"></section>
 
-  <button id="loadMore">
-    Load More
-  </button>
+    <div class="actions">
+      <button id="loadMore" type="button">Load More</button>
+    </div>
+  </main>
 
   <script src="app.js"></script>
-
 </body>
 </html>
