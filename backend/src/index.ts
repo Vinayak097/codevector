@@ -1,6 +1,7 @@
 import express from "express";
 import cors from 'cors'
-
+import dotenv from 'dotenv'
+dotenv.config()
 import { getProducts } from "./controllers/product.controller";
 
 const app = express();
