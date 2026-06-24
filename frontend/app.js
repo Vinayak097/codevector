@@ -8,7 +8,8 @@ const statusEl = document.getElementById("status");
 const loadedCountEl = document.getElementById("loadedCount");
 const cursorTextEl = document.getElementById("cursorText");
 
-const API_BASE = "http://localhost:8000";
+// Backend URL is set by config.js (loaded before this script)
+const API_BASE = window.REACT_APP_BACKEND_URL || "http://localhost:8000";
 
 let pageCursors = [null];
 let currentPageIndex = 0;
