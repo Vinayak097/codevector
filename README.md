@@ -52,3 +52,7 @@ Returns:
 ```
 
 Use `nextCursor.updatedAt` and `nextCursor.id` as the next request cursor.
+
+
+note= 
+to complete this task i need to choose the cursor pagination instead simple offset 
